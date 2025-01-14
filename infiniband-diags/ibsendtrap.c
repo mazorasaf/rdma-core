@@ -49,6 +49,7 @@
 #include "ibdiag_common.h"
 
 static struct ibmad_port *srcport;
+static struct ibmad_ports_pair *srcports;
 /* for local link integrity */
 static int error_port = 1;
 
@@ -264,13 +265,16 @@ int main(int argc, char **argv)
 
 	madrpc_show_errors(1);
 
-	srcport = mad_rpc_open_port(ibd_ca, ibd_ca_port, mgmt_classes, 2);
+	srcports = mad_rpc_open_port2(ibd_ca, ibd_ca_port, mgmt_classes, 2, 1);
+	if (!srcports)
+		IBEXIT("Failed to open '%s' port '%d'", ibd_ca, ibd_ca_port);
+	srcport = srcports->smi.port;
 	if (!srcport)
 		IBEXIT("Failed to open '%s' port '%d'", ibd_ca, ibd_ca_port);
 
 	smp_mkey_set(srcport, ibd_mkey);
 
 	rc = process_send_trap(trap_name);
-	mad_rpc_close_port(srcport);
+	mad_rpc_close_port2(srcports);
 	return rc;
 }
